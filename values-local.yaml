@@ -1,5 +1,8 @@
-# Used for Kind/Minikube
+# Used for Kind/Minikube (Local Development)
+# Storage: Uses emptyDir for quick testing without PVC provisioning issues
 storage:
-  class: standard # standard is default in Kind
+  usePVC: false  # emptyDir for local dev (data lost on pod restart)
+  class: standard
+  size: 1Gi
 ingress:
   hostSuffix: "local.gd"

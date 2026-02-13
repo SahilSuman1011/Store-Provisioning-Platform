@@ -1,5 +1,8 @@
-# Used for VPS/k3s
+# Used for VPS/k3s (Production)
+# Storage: Uses PVC with local-path provisioner for real persistence
 storage:
-  class: local-path # k3s uses local-path by default
+  usePVC: true  # PVC for production (data persists across pod restarts)
+  class: local-path  # k3s default storage class
+  size: 5Gi  # Larger size for production workloads
 ingress:
-  hostSuffix: "yourdomain.com"
+  hostSuffix: "yourdomain.com"  # Replace with actual domain

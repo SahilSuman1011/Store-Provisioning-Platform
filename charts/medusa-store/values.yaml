@@ -1,4 +1,5 @@
-image: medusajs/medusa-starter-default:latest
+image: jmflaherty/medusajs-backend:latest
+imagePullPolicy: IfNotPresent
 resources:
   limits:
     memory: 512Mi
@@ -7,6 +8,7 @@ resources:
     memory: 256Mi
     cpu: 200m
 storage:
+  usePVC: false  # Default to emptyDir; override with values-local.yaml or values-prod.yaml
   size: 1Gi
   class: standard
 ingress:
