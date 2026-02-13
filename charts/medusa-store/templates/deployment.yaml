@@ -14,37 +14,69 @@ spec:
     spec:
       serviceAccountName: {{ .Release.Name }}-sa
       containers:
+      - name: postgres
+        image: postgres:13-alpine
+        env:
+        - name: POSTGRES_USER
+          value: "medusa"
+        - name: POSTGRES_PASSWORD
+          value: "medusa"
+        - name: POSTGRES_DB
+          value: "medusa"
+        - name: PGDATA
+          value: "/var/lib/postgresql/data/pgdata"
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: storage
+          mountPath: /var/lib/postgresql/data
+          subPath: postgres
+        resources:
+          limits:
+            memory: 256Mi
+            cpu: 250m
+          requests:
+            memory: 128Mi
+            cpu: 100m
       - name: medusa
         image: {{ .Values.image }}
+        imagePullPolicy: {{ .Values.imagePullPolicy | default "IfNotPresent" }}
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         env:
         - name: DATABASE_TYPE
-          value: "sqlite" # Using SQLite for speed, mapped to PVC below
+          value: "postgres"
         - name: DATABASE_URL
-          value: "/var/lib/medusa/db.sqlite"
+          value: "postgres://medusa:medusa@localhost:5432/medusa"
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
               name: {{ .Release.Name }}-secrets
               key: JWT_SECRET
+        - name: REDIS_URL
+          value: "redis://localhost:6379"
         ports:
         - containerPort: 9000
         volumeMounts:
         - name: storage
           mountPath: /var/lib/medusa
+          subPath: medusa
         # Liveness & Readiness Checks
         livenessProbe:
           httpGet:
             path: /health
             port: 9000
-          initialDelaySeconds: 60
+          initialDelaySeconds: 90
         readinessProbe:
           httpGet:
             path: /health
             port: 9000
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
       volumes:
       - name: storage
+        {{- if .Values.storage.usePVC }}
         persistentVolumeClaim:
           claimName: {{ .Release.Name }}-data
+        {{- else }}
+        emptyDir: {}  # For local dev/testing only
+        {{- end }}
