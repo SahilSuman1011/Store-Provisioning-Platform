@@ -1,0 +1,4 @@
+apiVersion: v2
+name: medusa-store
+description: A MedusaJS Store blueprint for Urumi AI
+version: 0.1.0

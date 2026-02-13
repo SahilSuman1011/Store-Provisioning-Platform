@@ -1,0 +1,14 @@
+image: medusajs/medusa-starter-default:latest
+resources:
+  limits:
+    memory: 512Mi
+    cpu: 500m
+  requests:
+    memory: 256Mi
+    cpu: 200m
+storage:
+  size: 1Gi
+  class: standard
+ingress:
+  className: nginx
+  hostSuffix: "local.gd"

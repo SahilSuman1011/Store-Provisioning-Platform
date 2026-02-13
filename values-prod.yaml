@@ -1,0 +1,5 @@
+# Used for VPS/k3s
+storage:
+  class: local-path # k3s uses local-path by default
+ingress:
+  hostSuffix: "yourdomain.com"

@@ -1,0 +1,5 @@
+# Used for Kind/Minikube
+storage:
+  class: standard # standard is default in Kind
+ingress:
+  hostSuffix: "local.gd"
