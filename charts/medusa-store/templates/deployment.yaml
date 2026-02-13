@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: medusa
+  template:
+    metadata:
+      labels:
+        app: medusa
+    spec:
+      serviceAccountName: {{ .Release.Name }}-sa
+      containers:
+      - name: medusa
+        image: {{ .Values.image }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        env:
+        - name: DATABASE_TYPE
+          value: "sqlite" # Using SQLite for speed, mapped to PVC below
+        - name: DATABASE_URL
+          value: "/var/lib/medusa/db.sqlite"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-secrets
+              key: JWT_SECRET
+        ports:
+        - containerPort: 9000
+        volumeMounts:
+        - name: storage
+          mountPath: /var/lib/medusa
+        # Liveness & Readiness Checks
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 60
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 9000
+          initialDelaySeconds: 30
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-data

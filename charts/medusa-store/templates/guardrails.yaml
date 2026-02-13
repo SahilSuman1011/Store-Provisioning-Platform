@@ -1,0 +1,27 @@
+# This prevents one store from crashing your whole cluster
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: store-quota
+spec:
+  hard:
+    pods: "2"
+    requests.cpu: "500m"
+    requests.memory: "512Mi"
+    limits.cpu: "1"
+    limits.memory: "1Gi"
+---
+# Network Policy: Prevents store-A from talking to store-B
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-inter-store-traffic
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: ingress-nginx
