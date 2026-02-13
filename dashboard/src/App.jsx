@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import './App.css';
 
 const API_BASE = 'http://localhost:3001/api';
 
@@ -15,12 +16,11 @@ export default function App() {
       setStores(res.data);
       setError(null);
     } catch {
-      setError("Failed to fetch stores. Is the backend running?");
+      setError("Failed to fetch stores. Is the orchestrator backend running on port 3001?");
     }
   };
 
   useEffect(() => {
-    // Separate initial load from polling to satisfy React's effect guidelines
     let isMounted = true;
     
     const loadStores = async () => {
@@ -37,6 +37,8 @@ export default function App() {
   }, []);
 
   const handleCreate = async () => {
+    if (!newName.trim()) return;
+    
     setLoading(true);
     setError(null);
     try {
@@ -50,55 +52,105 @@ export default function App() {
   };
 
   const handleDelete = async (id) => {
+    if (!confirm(`Delete store "${id}"? This will remove all resources.`)) return;
+    
     try {
       await axios.delete(`${API_BASE}/stores/${id}`);
       fetchStores();
-    } catch {
-      setError("Delete failed.");
+    } catch (err) {
+      setError(err.response?.data?.error || "Delete failed");
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && newName.trim() && !loading) {
+      handleCreate();
     }
   };
 
   return (
-    <div style={{ padding: '40px', fontFamily: 'Arial', maxWidth: '1000px', margin: 'auto' }}>
-      <h1>Urumi Store Provisioner</h1>
-      
-      {error && <div style={{ color: 'red', background: '#fee', padding: '10px', marginBottom: '10px' }}>{error}</div>}
+    <div className="app-container">
+      <header className="app-header">
+        <h1 className="app-title">⚡ Urumi Store Provisioner</h1>
+        <p className="app-subtitle">Multi-tenant Kubernetes e-commerce platform</p>
+      </header>
 
-      <div style={{ marginBottom: '30px' }}>
-        <input 
-          value={newName} 
-          onChange={(e) => setNewName(e.target.value)}
-          placeholder="Store Name (e.g. MyShop)"
-          style={{ padding: '10px', width: '250px' }}
-        />
-        <button 
-          onClick={handleCreate} 
-          disabled={loading || !newName}
-          style={{ padding: '10px 20px', marginLeft: '10px', cursor: 'pointer' }}
-        >
-          {loading ? 'Provisioning...' : 'Create Store'}
-        </button>
-      </div>
+      {error && (
+        <div className="error-banner">
+          <span className="error-icon">⚠️</span>
+          <span>{error}</span>
+        </div>
+      )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-        {stores.map(store => (
-          <div key={store.id} style={{ border: '1px solid #ddd', padding: '15px', borderRadius: '8px', position: 'relative' }}>
-            <h3 style={{ marginTop: 0 }}>{store.id}</h3>
-            <p>Status: <b style={{ color: store.status === 'Ready' ? '#2ecc71' : '#f39c12' }}>{store.status}</b></p>
-            <p>
-               <a href={store.url} target="_blank" rel="noopener noreferrer" style={{ wordBreak: 'break-all' }}>
-                 {store.url}
-               </a>
-            </p>
-            <button 
-              onClick={() => handleDelete(store.id)} 
-              style={{ background: '#e74c3c', color: 'white', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', width: '100%' }}
-            >
-              Delete Store
-            </button>
+      <section className="create-section">
+        <div className="create-form">
+          <div className="input-wrapper">
+            <input 
+              className="store-input"
+              value={newName} 
+              onChange={(e) => setNewName(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter store name (e.g., myshop, store123)"
+              disabled={loading}
+            />
           </div>
-        ))}
-      </div>
+          <button 
+            className="btn btn-primary"
+            onClick={handleCreate} 
+            disabled={loading || !newName.trim()}
+          >
+            {loading ? (
+              <>
+                <span className="loading-spinner"></span>
+                Provisioning...
+              </>
+            ) : (
+              <>
+                <span>🚀</span>
+                Create Store
+              </>
+            )}
+          </button>
+        </div>
+      </section>
+
+      {stores.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">📦</div>
+          <h2 className="empty-title">No stores yet</h2>
+          <p className="empty-text">Create your first store to get started with the platform</p>
+        </div>
+      ) : (
+        <div className="stores-grid">
+          {stores.map(store => (
+            <div key={store.id} className="store-card">
+              <div className="store-header">
+                <h3 className="store-id">{store.id}</h3>
+                <span className={`store-status ${store.status === 'Ready' ? 'status-ready' : 'status-provisioning'}`}>
+                  <span className="status-dot"></span>
+                  {store.status}
+                </span>
+              </div>
+              
+              <div className="store-url">
+                <a href={store.url} target="_blank" rel="noopener noreferrer">
+                  <span>🔗</span>
+                  {store.url}
+                </a>
+              </div>
+
+              <div className="store-footer">
+                <button 
+                  className="btn btn-danger"
+                  onClick={() => handleDelete(store.id)}
+                >
+                  🗑️ Delete Store
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
