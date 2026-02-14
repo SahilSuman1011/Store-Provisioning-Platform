@@ -8,7 +8,9 @@ Multi-tenant Kubernetes-based e-commerce store provisioning with MedusaJS, featu
 
 ## 📹 Demo Video
 
-https://github.com/user-attachments/assets/demo-video.mp4
+<video src="demo-video.mp4" controls width="100%">
+  Your browser does not support the video tag.
+</video>
 
 _5-minute walkthrough demonstrating store provisioning, multi-tenancy, security features, and lifecycle management_
 
