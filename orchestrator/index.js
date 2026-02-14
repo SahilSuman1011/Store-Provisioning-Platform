@@ -80,7 +80,7 @@ app.get('/api/stores', async (req, res) => {
                 // Check pod status in this namespace
                 try {
                     // K8s client library has bugs, use kubectl directly
-                    const podResult = shell.exec(`kubectl get pods -n ${nsName} -o json`, { silent: true });
+                    const podResult = shell.exec(`wsl kubectl get pods -n ${nsName} -o json`, { silent: true });
                     if (podResult.code !== 0) {
                         throw new Error(podResult.stderr);
                     }
@@ -121,7 +121,7 @@ app.post('/api/stores', async (req, res) => {
     const storeId = `store-${name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
     
     // Abuse Prevention: Check total store count
-    const countCheck = shell.exec(`kubectl get ns -l kubernetes.io/metadata.name | grep ^store- | wc -l`, { silent: true });
+    const countCheck = shell.exec(`wsl kubectl get ns -l kubernetes.io/metadata.name | grep ^store- | wc -l`, { silent: true });
     const currentStoreCount = parseInt(countCheck.stdout.trim()) || 0;
     if (currentStoreCount >= MAX_STORES_TOTAL) {
         auditLog('STORE_LIMIT_EXCEEDED', { requested: storeId, current: currentStoreCount, max: MAX_STORES_TOTAL });
@@ -130,7 +130,7 @@ app.post('/api/stores', async (req, res) => {
     
     // Idempotency check: Don't create if exists
     console.log(`[POST /api/stores] Checking if store already exists...`);
-    const check = shell.exec(`helm status ${storeId} -n ${storeId}`, { silent: true });
+    const check = shell.exec(`wsl helm status ${storeId} -n ${storeId}`, { silent: true });
     if (check.code === 0) {
         console.log(`[POST /api/stores] Store ${storeId} already exists!`);
         auditLog('STORE_CREATE_DUPLICATE', { storeId });
@@ -146,7 +146,9 @@ app.post('/api/stores', async (req, res) => {
     console.log(`[POST /api/stores] Values path: ${valuesPath}`);
     console.log(`[POST /api/stores] Chart path: ${chartPath}`);
 
-    const cmd = `helm install ${storeId} ${chartPath} --namespace ${storeId} --create-namespace -f ${valuesPath} --timeout 5m`;
+    const wslChartPath = chartPath.replace(/\\/g, '/').replace(/^C:/, '/mnt/c');
+    const wslValuesPath = valuesPath.replace(/\\/g, '/').replace(/^C:/, '/mnt/c');
+    const cmd = `wsl helm install ${storeId} ${wslChartPath} --namespace ${storeId} --create-namespace -f ${wslValuesPath} --timeout 5m`;
     console.log(`[POST /api/stores] Executing command: ${cmd}`);
     
     shell.exec(cmd, (code, stdout, stderr) => {
@@ -169,8 +171,8 @@ app.delete('/api/stores/:id', async (req, res) => {
     auditLog('STORE_DELETE_START', { storeId: id });
     
     // Delete PVCs first to avoid data persistence issues
-    shell.exec(`kubectl delete pvc -n ${id} --all`, { silent: true });
-    const result = shell.exec(`helm uninstall ${id} -n ${id} && kubectl delete namespace ${id}`, { silent: true });
+    shell.exec(`wsl kubectl delete pvc -n ${id} --all`, { silent: true });
+    const result = shell.exec(`wsl bash -c "helm uninstall ${id} -n ${id} && kubectl delete namespace ${id}"`, { silent: true });
     
     if (result.code === 0) {
         stats.deleted++;
