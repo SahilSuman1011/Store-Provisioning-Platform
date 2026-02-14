@@ -6,6 +6,8 @@ Multi-tenant Kubernetes-based e-commerce store provisioning with MedusaJS, featu
 
 ---
 
+![alt text](image.png)
+
 ## 🚀 Quick Start (Local Kind Cluster)
 
 ### Prerequisites
