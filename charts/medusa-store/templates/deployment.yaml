@@ -18,9 +18,15 @@ spec:
         image: postgres:13-alpine
         env:
         - name: POSTGRES_USER
-          value: "medusa"
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-secrets
+              key: POSTGRES_USER
         - name: POSTGRES_PASSWORD
-          value: "medusa"
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-secrets
+              key: POSTGRES_PASSWORD
         - name: POSTGRES_DB
           value: "medusa"
         - name: PGDATA
@@ -47,7 +53,10 @@ spec:
         - name: DATABASE_TYPE
           value: "postgres"
         - name: DATABASE_URL
-          value: "postgres://medusa:medusa@localhost:5432/medusa"
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Release.Name }}-secrets
+              key: DATABASE_URL
         - name: JWT_SECRET
           valueFrom:
             secretKeyRef:
