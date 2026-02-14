@@ -1,7 +1,7 @@
 # Complete End-to-End Order Placement Test via MedusaJS API
 # This demonstrates the Definition of Done: "A provisioned store must support placing an order end-to-end"
 
-$baseUrl = "http://store-myshop.local.gd"
+$baseUrl = "http://store-demo.local.gd"
 $ErrorActionPreference = "Stop"
 
 Write-Host ""
